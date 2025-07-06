@@ -47,13 +47,13 @@ void IKeyboardFocusListener::ClearActiveKeyboardFocus(bool notifyListeners)
 TextEntry::TextEntry(ITextEntryListener* owner, const char* name, int x, int y, int charWidth, char* var)
 : mVarCString(var)
 {
-   Construct(owner, name, x, y, charWidth);
+   Construct(owner, name, x, y, charWidth, true);
 }
 
 TextEntry::TextEntry(ITextEntryListener* owner, const char* name, int x, int y, int charWidth, std::string* var)
 : mVarString(var)
 {
-   Construct(owner, name, x, y, charWidth);
+   Construct(owner, name, x, y, charWidth, true);
 }
 
 TextEntry::TextEntry(ITextEntryListener* owner, const char* name, int x, int y, int charWidth, int* var, int min, int max)
@@ -62,7 +62,7 @@ TextEntry::TextEntry(ITextEntryListener* owner, const char* name, int x, int y, 
 , mIntMin(min)
 , mIntMax(max)
 {
-   Construct(owner, name, x, y, charWidth);
+   Construct(owner, name, x, y, charWidth, true);
 }
 
 TextEntry::TextEntry(ITextEntryListener* owner, const char* name, int x, int y, int charWidth, float* var, float min, float max)
@@ -71,13 +71,15 @@ TextEntry::TextEntry(ITextEntryListener* owner, const char* name, int x, int y, 
 , mFloatMin(min)
 , mFloatMax(max)
 {
-   Construct(owner, name, x, y, charWidth);
+   Construct(owner, name, x, y, charWidth, true);
 }
 
-void TextEntry::Construct(ITextEntryListener* owner, const char* name, int x, int y, int charWidth)
+void TextEntry::Construct(ITextEntryListener* owner, const char* name, int x, int y, int charWidth, bool hideAfterCommandRuns)
 {
    mCharWidth = charWidth;
    mListener = owner;
+
+   mHideConsoleAfterCommand = hideAfterCommandRuns;
 
    UpdateDisplayString();
 
@@ -293,7 +295,11 @@ void TextEntry::OnKeyPressed(int key, bool isRepeat)
    if (key == OF_KEY_RETURN)
    {
       AcceptEntry(true);
-      IKeyboardFocusListener::ClearActiveKeyboardFocus(!K(notifyListeners));
+
+      // Hide console if requested
+      if (mHideConsoleAfterCommand) {
+         IKeyboardFocusListener::ClearActiveKeyboardFocus(!K(notifyListeners));
+      }
    }
    else if (key == OF_KEY_TAB)
    {
@@ -716,3 +722,6 @@ void TextEntry::LoadState(FileStreamIn& in, bool shouldSetValue)
       AcceptEntry(false);
    }
 }
+
+void TextEntry::SetHideConsoleAfterCommand(bool hide) { mHideConsoleAfterCommand = hide; }
+bool TextEntry::GetHideConsoleAfterCommand() const { return mHideConsoleAfterCommand; }

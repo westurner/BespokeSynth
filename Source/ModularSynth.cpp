@@ -277,6 +277,7 @@ void ModularSynth::Setup(juce::AudioDeviceManager* globalAudioDeviceManager, juc
    mConsoleListener = new ConsoleListener();
    mConsoleEntry = new TextEntry(mConsoleListener, "console", 0, 20, 50, mConsoleText);
    mConsoleEntry->SetRequireEnter(true);
+   mConsoleEntry->SetHideConsoleAfterCommand(false);
 }
 
 void ModularSynth::LoadResources(void* nanoVG, void* fontBoundsNanoVG)
@@ -2874,12 +2875,15 @@ void ModularSynth::LoadStatePopupImp()
 
 void ModularSynth::SaveState(std::string file, bool autosave)
 {
+   std::string filename = File(mCurrentSaveStatePath).getFileName().toStdString();
    if (!autosave)
    {
       mCurrentSaveStatePath = file;
-      std::string filename = File(mCurrentSaveStatePath).getFileName().toStdString();
       mMainComponent->getTopLevelComponent()->setName("bespoke synth - " + filename);
       TheTitleBar->DisplayTemporaryMessage("saved " + filename);
+      ofLog() << "Saved to path: " << filename;
+   } else {
+      ofLog() << "Autosaved to path: " << filename;
    }
 
    mAudioThreadMutex.Lock("SaveState()");
@@ -3034,14 +3038,56 @@ INoteReceiver* ModularSynth::FindNoteReceiver(std::string name, bool fail)
 
 void ModularSynth::OnConsoleInput(std::string command /* = "" */)
 {
+   static bool hideConsoleAfterCommand = false; // Add this static variable
+
    if (command.empty())
       command = mConsoleText;
    std::vector<std::string> tokens = ofSplitString(command, " ", true, true);
 
    if (tokens.size() > 0)
    {
+      ofLog() << "$ " << mConsoleText;
       if (tokens[0] == "")
       {
+      }
+      else if ((tokens[0] == "help") || (tokens[0] == "?"))
+      {
+         ofLog() << "Available commands:";
+         ofLog() << "  <module name>       - Spawn module by name";
+         ofLog() << "  clear               - Clear errors and events";
+         ofLog() << "  clearall            - Reset layout";
+         ofLog() << "  clearerrors         - Clear error messages";
+         ofLog() << "  dev                 - Show dev modules";
+         ofLog() << "  dumpmem             - Dump unfreed memory";
+         ofLog() << "  dumpstats           - Dump stats";
+         ofLog() << "  forcecrash          - Force a crash (for testing)";
+         ofLog() << "  getmouse            - Print mouse info";
+         ofLog() << "  getwindowinfo       - Print window info";
+         ofLog() << "  help | ?            - Show this help message";
+         ofLog() << "  hightime            - Advance global time";
+         ofLog() << "  home                - Zoom to home";
+         ofLog() << "  l                   - Quick load state";
+         ofLog() << "  load <file>         - Load layout from file";
+         ofLog() << "  loadstate <file>    - Load state";
+         ofLog() << "  minimizeall         - Minimize all modules";
+         ofLog() << "  profiler            - Toggle profiler";
+         ofLog() << "  reconnect           - Reconnect MIDI devices";
+         ofLog() << "  resettime           - Reset global time";
+         ofLog() << "  s                   - Quick save state";
+         ofLog() << "  save <file>         - Save layout (optionally to file)";
+         ofLog() << "  saveas              - Save layout as popup";
+         ofLog() << "  savestate <file>    - Save state";
+         ofLog() << "  screenshotmodule    - Screenshot first module";
+         ofLog() << "  tempo <bpm>         - Set tempo";
+         ofLog() << "  togglehide          - Toggle hiding console after command";
+         ofLog() << "  write               - Save output";
+      }
+      else if (tokens[0] == "togglehide")
+      {
+         hideConsoleAfterCommand = !hideConsoleAfterCommand;
+         if (mConsoleEntry)
+            mConsoleEntry->SetHideConsoleAfterCommand(hideConsoleAfterCommand);
+         ofLog() << "Console will " << (hideConsoleAfterCommand ? "" : "not ") << "be hidden after command.";
       }
       else if (tokens[0] == "clearerrors")
       {
@@ -3173,6 +3219,12 @@ void ModularSynth::OnConsoleInput(std::string command /* = "" */)
          IDrawableModule* module = SpawnModuleOnTheFly(spawnable, GetMouseX(&mModuleContainer) + grabOffset.x, GetMouseY(&mModuleContainer) + grabOffset.y);
          TheSynth->SetMoveModule(module, grabOffset.x, grabOffset.y, true);
       }
+   }
+
+   // Hide the console if toggled on
+   if (hideConsoleAfterCommand)
+   {
+      IKeyboardFocusListener::ClearActiveKeyboardFocus(!K(notifyListeners));
    }
 }
 

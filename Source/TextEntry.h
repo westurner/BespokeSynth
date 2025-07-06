@@ -91,11 +91,14 @@ public:
    bool IsTextEntry() const override { return true; }
    bool ModulatorUsesLiteralValue() const override { return true; }
 
+   void SetHideConsoleAfterCommand(bool hide);
+   bool GetHideConsoleAfterCommand() const;
+
 protected:
    ~TextEntry(); //protected so that it can't be created on the stack
 
 private:
-   void Construct(ITextEntryListener* owner, const char* name, int x, int y, int charWidth); //shared constructor
+   void Construct(ITextEntryListener* owner, const char* name, int x, int y, int charWidth, bool hideAfterCommandRuns); //shared constructor
 
    void AddCharacter(char c);
    bool AllowCharacter(char c);
@@ -129,4 +132,5 @@ private:
    bool mFlexibleWidth{ false };
    bool mHovered{ false };
    bool mRequireEnterToAccept{ false };
+   bool mHideConsoleAfterCommand{ true };
 };
