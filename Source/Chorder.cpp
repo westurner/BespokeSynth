@@ -106,9 +106,13 @@ void Chorder::DrawModule()
 
 void Chorder::GridUpdated(UIGrid* grid, int col, int row, float value, float oldValue)
 {
+   ofLog() << "Before";
    if (!mDiatonic)
-      return; //TODO(Ryan)
-
+   {
+      if (!mResetBeforeGridUpdated)
+         return; //TODO(Ryan)
+   }
+   ofLog() << "After";
    int tone = col + (mChordGrid->GetRows() / 2 - row) * mChordGrid->GetCols();
    if (value > 0 && oldValue == 0)
    {
@@ -148,6 +152,19 @@ void Chorder::RemoveTone(int tone)
          int chordtone = tone + TheScale->GetToneFromPitch(i);
          int outPitch = TheScale->MakeDiatonic(TheScale->GetPitchFromTone(chordtone));
          PlayChorderNote(NoteMessage(NextBufferTime(false), outPitch, 0));
+      }
+   }
+}
+
+void Chorder::RemoveAllTones()
+{
+   mChordGrid->Clear();
+   for (int i = 0; i < TOTAL_NUM_NOTES; ++i)
+   {
+      if (mHeldCount[i] > 0)
+      {
+         PlayNoteOutput(NoteMessage(gTime, i, 0));
+         mHeldCount[i] = 0;
       }
    }
 }
@@ -320,6 +337,7 @@ void Chorder::LoadLayout(const ofxJSONElement& moduleInfo)
 {
    mModuleSaveData.LoadString("target", moduleInfo);
    mModuleSaveData.LoadBool("multislider_mode", moduleInfo, true);
+   mModuleSaveData.LoadBool("reset_before_grid_updated", moduleInfo, false);
 
    SetUpFromSaveData();
 }
@@ -332,6 +350,8 @@ void Chorder::SetUpFromSaveData()
    mChordGrid->SetGridMode(multisliderMode ? UIGrid::kMultisliderBipolar : UIGrid::kNormal);
    mChordGrid->SetRestrictDragToRow(multisliderMode);
    mChordGrid->SetRequireShiftForMultislider(true);
+
+   mResetBeforeGridUpdated = mModuleSaveData.GetBool("reset_before_grid_updated");
 }
 
 void Chorder::SaveState(FileStreamOut& out)

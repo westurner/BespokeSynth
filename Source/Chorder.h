@@ -49,6 +49,8 @@ public:
    void AddTone(int tone, float velocity = 1);
    void RemoveTone(int tone);
 
+   void RemoveAllTones();
+
    //INoteReceiver
    void PlayNote(NoteMessage note) override;
 
@@ -94,4 +96,6 @@ private:
    Checkbox* mDiatonicCheckbox{ nullptr };
    DropdownList* mChordDropdown{ nullptr };
    DropdownList* mInversionDropdown{ nullptr };
+
+   bool mResetBeforeGridUpdated{ false };
 };
