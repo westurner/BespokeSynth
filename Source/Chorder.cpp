@@ -106,13 +106,16 @@ void Chorder::DrawModule()
 
 void Chorder::GridUpdated(UIGrid* grid, int col, int row, float value, float oldValue)
 {
-   ofLog() << "Before";
+   ofLog() << "Chorder::GridUpdated: Begin";
    if (!mDiatonic)
    {
       if (!mResetBeforeGridUpdated)
          return; //TODO(Ryan)
    }
-   ofLog() << "After";
+   if (mResetBeforeGridUpdated) {
+      ofLog() << "Chorder::GridUpdated: Removing all tones";
+      RemoveAllTones();
+   }
    int tone = col + (mChordGrid->GetRows() / 2 - row) * mChordGrid->GetCols();
    if (value > 0 && oldValue == 0)
    {
