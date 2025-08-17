@@ -2990,6 +2990,9 @@ juce::Component* ModularSynth::GetFileChooserParent() const
 #endif
 }
 
+// Track last-used directory for file chooser
+std::string mLastFileChooserPath;
+
 void ModularSynth::SaveStatePopup()
 {
    File targetFile;
@@ -3001,9 +3004,12 @@ void ModularSynth::SaveStatePopup()
 
    targetFile = File(savestateDirPath + templateName + date + ".bsk");
 
-   FileChooser chooser("Save current state as...", targetFile, "*.bsk", true, false, GetFileChooserParent());
-   if (chooser.browseForFileToSave(true))
+   juce::File initialDir = mLastFileChooserPath.empty() ? targetFile : juce::File(mLastFileChooserPath);
+   FileChooser chooser("Save current state as...", initialDir, "*.bsk", true, false, GetFileChooserParent());
+   if (chooser.browseForFileToSave(true)) {
       SaveState(chooser.getResult().getFullPathName().toStdString(), false);
+      mLastFileChooserPath = chooser.getResult().getParentDirectory().getFullPathName().toStdString();
+   }
 }
 
 void ModularSynth::LoadStatePopup()
@@ -3013,9 +3019,12 @@ void ModularSynth::LoadStatePopup()
 
 void ModularSynth::LoadStatePopupImp()
 {
-   FileChooser chooser("Load state", File(ofToDataPath("savestate")), "*.bsk;*.bskt", true, false, GetFileChooserParent());
-   if (chooser.browseForFileToOpen())
+   juce::File initialDir = mLastFileChooserPath.empty() ? juce::File(ofToDataPath("savestate")) : juce::File(mLastFileChooserPath);
+   FileChooser chooser("Load state", initialDir, "*.bsk;*.bskt", true, false, GetFileChooserParent());
+   if (chooser.browseForFileToOpen()) {
       LoadState(chooser.getResult().getFullPathName().toStdString());
+      mLastFileChooserPath = chooser.getResult().getParentDirectory().getFullPathName().toStdString();
+   }
 }
 
 void ModularSynth::SaveState(std::string file, bool autosave)
